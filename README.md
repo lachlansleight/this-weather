@@ -1,10 +1,3 @@
-# Language Buddy
+# This Weather
 
-An AI language practice partner for mandarin chinese.
-
-### Setup
-
-1. Ensure you have `OPENAI_API_KEY="sk-your-key-here` in your .env / environment variables
-2. That's it, push to Vercel and it should work.
-
-I'll put together a better readme later on most likely.
+A simple app that tells you whether the weather is weird right now or not
