@@ -1,13 +1,17 @@
+import dayjs from "dayjs";
+
 export const timePeriods: TimePeriod[] = ["day", "week", "month", "season", "year"];
 export type TimePeriod = "day" | "week" | "month" | "season" | "year";
 export const weatherVariables: WeatherVariable[] = ["hot", "cold", "windy", "wet", "dry"];
 export type WeatherVariable = "hot" | "cold" | "windy" | "wet" | "dry";
 
+export type Coordinate = {
+    lat: number;
+    lon: number;
+};
+
 export type WeatherRequest = {
-    location: {
-        lat: number;
-        lon: number;
-    };
+    location: Coordinate;
     timePeriod: TimePeriod;
     variable: WeatherVariable;
 };
@@ -26,6 +30,8 @@ export type WeatherHistogram = {
         min: number;
         max: number;
     }[];
+    mean: number;
+    sd: number;
 };
 
 export type WeatherResponse = {
@@ -36,6 +42,13 @@ export type WeatherResponse = {
     thisPeriod: number;
     units: string;
 };
+
+const getSeason = (month: number) => {
+    if(month >= 2 && month <= 4) return "spring";
+    if(month >= 5 && month <= 7) return "summer";
+    if(month >= 8 && month <= 10) return "autumn";
+    return "winter";
+}
 
 export class TypeUtils {
     static timePeriodDisplay(timePeriod: TimePeriod, capitalize = false): string {
@@ -68,18 +81,91 @@ export class TypeUtils {
         }
     }
 
-    static getWeatherVariableParams(variable: WeatherVariable): string[] {
+    static getWeatherVariableParams(variable: WeatherVariable, isForecast = false): string[] {
         switch (variable) {
             case "hot":
-                return ["temperature_2m_mean"];
+                return isForecast ? ["temperature_2m"] : ["temperature_2m_max"];
             case "cold":
-                return ["temperature_2m_mean"];
+                return isForecast ? ["temperature_2m"] : ["temperature_2m_max"];
             case "windy":
-                return ["wind_speed_10m_max", "wind_gusts_10m_max"];
+                return isForecast ? ["wind_gusts_10m"] : ["wind_gusts_10m_max"];
             case "wet":
-                return ["precipitation_sum", "precipitation_hours"];
+                return isForecast ? ["precipitation"] : ["precipitation_sum"];
             case "dry":
-                return ["precipitation_sum", "precipitation_hours"];
+                return isForecast ? ["precipitation"] : ["precipitation_sum"];
         }
     }
-}
+
+    static getHumanReadableHeader(data: WeatherResponse): string {
+        let normalness = (data.thisPeriod - data.histogram.mean) / data.histogram.sd;
+        if(data.variable === "cold" || data.variable === "dry") normalness *= -1;
+        if(normalness < -1) return "What are you on about?";
+        if(Math.abs(normalness) < 1) return "It's just you.";
+        return "It's not just you!";
+    }
+
+    static getHumanReadableReport(data: WeatherResponse): string {
+        let report = "";
+
+        switch(data.timePeriod) {
+            case "day":
+                report += "Today is";
+                break;
+            case "week":
+                report += "This week is";
+                break;
+            case "month":
+                report += "This month is";
+                break;
+            case "season":
+                report += "This season is";
+                break;
+            case "year":
+                report += "This year is";
+                break;
+        }
+
+        switch(data.variable) {
+            case "hot":
+                report += " hotter";
+                break;
+            case "cold":
+                report += " colder";
+                break;
+            case "dry":
+                report += " drier";
+                break;
+            case "wet":
+                report += " wetter";
+                break;
+            case "windy":
+                report += " windier";
+                break;
+        }
+
+        const numberLarger = data.variable === "cold" || data.variable === "dry"
+            ? data.rawData.reduce((a, b) => a + (b.value > data.thisPeriod ? 1 : 0), 0)
+            : data.rawData.reduce((a, b) => a + (b.value < data.thisPeriod ? 1 : 0), 0);
+        report += ` than ${(100 * (numberLarger / data.rawData.length)).toFixed(0)}%`
+
+        switch(data.timePeriod) {
+            case "day":
+                report += " of days around this time of year, since 1970!";
+                break;
+            case "week":
+                report += " of weeks around this time of year, since 1970!";
+                break;
+            case "month":
+                report += ` of ${dayjs().format("MMMM")}s since 1970!`;
+                break;
+            case "season":
+                report += ` of ${getSeason(dayjs().month())}s since 1970!`;
+                break;
+            case "year":
+                report += ` of years since 1970!`;
+                break;
+        }
+
+        return report;
+    }
+  }

@@ -8,39 +8,39 @@ import {
 import dayjs from "dayjs";
 import Server from "next/server";
 import { buildHistogram } from "_lib/histogram";
+import { getForecast, getHistory } from "_lib/weatherHelpers";
 
-const range = (start: number, stop: number, step: number) =>
-    Array.from({ length: (stop - start) / step }, (_, i) => start + i * step);
+import customParseFormat from "dayjs/plugin/customParseFormat";
+dayjs.extend(customParseFormat);
+
+
 
 export const POST = async (req: Request) => {
     //get json data
     const data: WeatherRequest = await req.json();
 
-    let baseUrl = `https://archive-api.open-meteo.com/v1/archive`;
-    const fiveDaysAgo = dayjs().subtract(5, "day").format("YYYY-MM-DD");
-    const params = TypeUtils.getWeatherVariableParams(data.variable);
-    const response = (
-        await fetchWeatherApi(baseUrl, {
-            latitude: data.location.lat,
-            longitude: data.location.lon,
-            start_date: "1970-01-01",
-            end_date: fiveDaysAgo,
-            daily: params,
-        })
-    )[0];
-    const daily = response.daily()!;
+    const today = dayjs();
+    let rawForecastData = (await getForecast(data.location, data.variable));
+    const forecastData = rawForecastData.filter(v => {
+        return dayjs(v.time, "YYYY-MM-DD").isBefore(today);
+    });
+    const rawHistoryData = await getHistory(data.location, data.variable);
+    const historyData = rawHistoryData.filter(v => {
+        let simDate = dayjs(v.time);
+        let yearOffset = 0;
+        const thisMonth = today.get("month");
+        const thatMonth = simDate.get("month");
+        if(Math.abs(thisMonth - thatMonth) > 6) {
+            yearOffset = thisMonth > thatMonth ? 1 : -1;
+        }
+        simDate = simDate.set("year", today.get("year") + yearOffset);
+        return simDate.isAfter(today.subtract(7, "day")) && simDate.isBefore(today.add(7, "day"));
+    });
+    //return Server.NextResponse.json(historyData);
+    const allData = [...historyData, ...forecastData];
 
-    // Note: The order of weather variables in the URL query and the indices below need to match!
-    const utcOffsetSeconds = response.utcOffsetSeconds();
-    const times = range(Number(daily.time()), Number(daily.timeEnd()), daily.interval()).map(
-        t => new Date((t + utcOffsetSeconds) * 1000)
-    );
-    const values: number[] = Array.from(daily.variables(0)?.valuesArray() || []);
-    const weatherData: WeatherResponseRawData = times.map((time, i) => ({
-        time: time.toISOString(),
-        value: values[i],
-    }));
-    const histogram = buildHistogram(values, 20);
+    
+    const histogram = buildHistogram(allData, 20);
     const fullResponse: WeatherResponse = {
         timePeriod: data.timePeriod,
         variable: data.variable,
@@ -50,8 +50,8 @@ export const POST = async (req: Request) => {
                 : data.variable === "cold" || data.variable === "hot"
                   ? "°C"
                   : "mm",
-        rawData: [],
-        thisPeriod: values[values.length - 1],
+        rawData: allData,
+        thisPeriod: allData[allData.length - 1].value,
         histogram,
     };
     return Server.NextResponse.json(fullResponse);

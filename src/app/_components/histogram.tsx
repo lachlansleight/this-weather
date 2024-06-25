@@ -32,8 +32,10 @@ const Histogram = ({
                                 height: `${(bin.count / data.maxCount) * 100}%`,
                             }}
                         >
-                            <div className="opacity-0 group-hover:opacity-100 absolute left-0 w-full overflow-visible -top-6 text-center">
-                                {/* <span className="text-center text-md">{((bin.min + bin.max) / 2).toFixed(1)}{units}</span> */}
+                            <div className="opacity-0 group-hover:opacity-100 absolute left-0 w-full overflow-visible -bottom-6 text-center">
+                                <span className="text-center text-md relative -left-4">
+                                    {((bin.min + bin.max) / 2).toFixed(1)}{units}
+                                </span>
                             </div>
                         </div>
                     );
@@ -52,7 +54,7 @@ const Histogram = ({
                 <div
                     className="absolute z-10 w-48 h-full pointer-events-none"
                     style={{
-                        left: `calc((${(current.value / (data.max - data.min)) * 100}%) - 6rem)`,
+                        left: `calc((${((current.value - data.min) / (data.max - data.min)) * 100}%) - 6rem)`,
                         transition: "all 0.3s",
                     }}
                 >

@@ -8,8 +8,10 @@ import { useEffect, useState } from "react";
 import debugData from "_lib/data/debugData.json";
 import Histogram from "_components/histogram";
 import { FaDonate, FaGithub, FaShareAlt } from "react-icons/fa";
+import { VscLoading } from "react-icons/vsc";
 
 export default function MainPage() {
+    const [loading, setLoading] = useState(false);
     const [data, setData] = useState<WeatherResponse | null>(null);
 
     useEffect(() => {
@@ -17,20 +19,44 @@ export default function MainPage() {
     }, []);
 
     const handleSubmit = async (data: WeatherRequest) => {
+        setLoading(true);
         const res = await axios.post("/api/weather", data);
         console.log(res.data);
         setData(res.data);
+        setLoading(false);
     };
+
+    if(loading) {
+        return (
+            <div className="w-full grid place-items-center" style={{
+                height: "calc(100vh - 4rem)"
+            }}>
+                <div className="w-full h-full flex flex-col gap-4 relative">
+                    <div className="absolute left-0 top-0 w-full h-full grid place-items-center">
+                        <VscLoading className="animate-[spin_1.5s_linear_infinite] text-[10rem]" />
+                    </div>
+                    <div className="absolute left-0 top-0 w-full h-full grid place-items-center">
+                        <VscLoading className="animate-[spin_1s_linear_infinite_reverse] text-[8rem]" />
+                    </div>
+                    <div className="absolute left-0 top-0 w-full h-full grid place-items-center">
+                        <VscLoading className="animate-[spin_1.85s_linear_infinite] text-[6rem]" />
+                    </div>
+                    <div className="absolute left-0 top-[6rem] w-full h-full grid place-items-center">
+                        <p className="text-3xl text-center">Let&apos;s see...</p>
+                    </div>
+                </div>
+            </div>
+        )
+    }
 
     if (data) {
         return (
             <div className="flex flex-col gap-4 items-center w-full mt-16">
                 <h2 className="text-center text-3xl font-aleo w-full mx-8">
-                    It&apos;s not just you!
+                    {TypeUtils.getHumanReadableHeader(data)}
                 </h2>
                 <p className="text-center text-2xl w-full mx-8 mb-4 leading-none">
-                    The week has been colder than 80% of weeks around this time of year since the
-                    year 1940!
+                    {TypeUtils.getHumanReadableReport(data)}
                 </p>
                 <Histogram
                     data={data.histogram}
