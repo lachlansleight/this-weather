@@ -43,12 +43,12 @@ export type WeatherResponse = {
     units: string;
 };
 
-const getSeason = (month: number) => {
-    if(month >= 2 && month <= 4) return "spring";
-    if(month >= 5 && month <= 7) return "summer";
-    if(month >= 8 && month <= 10) return "autumn";
+export const getSeason = (month: number) => {
+    if (month >= 2 && month <= 4) return "spring";
+    if (month >= 5 && month <= 7) return "summer";
+    if (month >= 8 && month <= 10) return "autumn";
     return "winter";
-}
+};
 
 export class TypeUtils {
     static timePeriodDisplay(timePeriod: TimePeriod, capitalize = false): string {
@@ -98,74 +98,96 @@ export class TypeUtils {
 
     static getHumanReadableHeader(data: WeatherResponse): string {
         let normalness = (data.thisPeriod - data.histogram.mean) / data.histogram.sd;
-        if(data.variable === "cold" || data.variable === "dry") normalness *= -1;
-        if(normalness < -1) return "What are you on about?";
-        if(Math.abs(normalness) < 1) return "It's just you.";
+        if (data.variable === "cold" || data.variable === "dry") normalness *= -1;
+        if (normalness < -1) return "What are you on about?";
+        if (Math.abs(normalness) < 1) return "It's just you.";
         return "It's not just you!";
     }
 
     static getHumanReadableReport(data: WeatherResponse): string {
         let report = "";
+        let thisPeriodName = "";
+        let thisVariableName = "";
+        let thisWindowName = "";
 
-        switch(data.timePeriod) {
+        let normalness = (data.thisPeriod - data.histogram.mean) / data.histogram.sd;
+        if (data.variable === "cold" || data.variable === "dry") normalness *= -1;
+
+        switch (data.timePeriod) {
             case "day":
-                report += "Today is";
+                thisPeriodName = "Today";
                 break;
             case "week":
-                report += "This week is";
+                thisPeriodName = "This week";
                 break;
             case "month":
-                report += "This month is";
+                thisPeriodName = "This month";
                 break;
             case "season":
-                report += "This season is";
+                thisPeriodName = "This season";
                 break;
             case "year":
-                report += "This year is";
+                thisPeriodName = "This year";
                 break;
         }
 
-        switch(data.variable) {
+        switch (data.variable) {
             case "hot":
-                report += " hotter";
+                thisVariableName = "hotter";
                 break;
             case "cold":
-                report += " colder";
+                thisVariableName = "colder";
                 break;
             case "dry":
-                report += " drier";
+                thisVariableName = "drier";
                 break;
             case "wet":
-                report += " wetter";
+                thisVariableName = "wetter";
                 break;
             case "windy":
-                report += " windier";
+                thisVariableName = "windier";
                 break;
         }
 
-        const numberLarger = data.variable === "cold" || data.variable === "dry"
-            ? data.rawData.reduce((a, b) => a + (b.value > data.thisPeriod ? 1 : 0), 0)
-            : data.rawData.reduce((a, b) => a + (b.value < data.thisPeriod ? 1 : 0), 0);
-        report += ` than ${(100 * (numberLarger / data.rawData.length)).toFixed(0)}%`
+        const numberLarger =
+            data.variable === "cold" || data.variable === "dry"
+                ? data.rawData.reduce((a, b) => a + (b.value > data.thisPeriod ? 1 : 0), 0)
+                : data.rawData.reduce((a, b) => a + (b.value < data.thisPeriod ? 1 : 0), 0);
+        const percentage = 100 * (numberLarger / data.rawData.length);
 
-        switch(data.timePeriod) {
+        switch (data.timePeriod) {
             case "day":
-                report += " of days around this time of year, since 1970!";
+                thisWindowName = `${dayjs().date() < 10 ? "early" : dayjs().date() > 20 ? "late" : "mid"} ${dayjs().format("MMMM")} days`;
                 break;
             case "week":
-                report += " of weeks around this time of year, since 1970!";
+                thisWindowName = `${dayjs().date() < 10 ? "early" : dayjs().date() > 20 ? "late" : "mid"} ${dayjs().format("MMMM")} weeks`;
                 break;
             case "month":
-                report += ` of ${dayjs().format("MMMM")}s since 1970!`;
+                thisWindowName = `${dayjs().format("MMMM")}s`;
                 break;
             case "season":
-                report += ` of ${getSeason(dayjs().month())}s since 1970!`;
+                thisWindowName = `${getSeason(dayjs().month())}s`;
                 break;
             case "year":
-                report += ` of years since 1970!`;
+                thisWindowName = `years`;
                 break;
+        }
+
+        console.log(normalness);
+        if (normalness < 0.5) {
+            if (normalness < -0.5) {
+                report = `In fact, ${(100 - percentage).toFixed(0)}% of ${thisWindowName} have been ${thisVariableName} than this one!`;
+            } else {
+                if (Math.abs(percentage - 50) < 15) {
+                    report = `${thisPeriodName} ${data.timePeriod === "day" ? "isn't" : "hasn't been"} any ${thisVariableName} than most ${thisWindowName} on record`;
+                } else {
+                    report = `${thisPeriodName} ${data.timePeriod === "day" ? "is" : "has been"} only ${thisVariableName} than ${percentage.toFixed(0)}% of ${thisWindowName} on record!`;
+                }
+            }
+        } else {
+            report = `${thisPeriodName} ${data.timePeriod === "day" ? "is" : "has been"} ${thisVariableName} than ${percentage.toFixed(0)}% of ${thisWindowName} on record!`;
         }
 
         return report;
     }
-  }
+}

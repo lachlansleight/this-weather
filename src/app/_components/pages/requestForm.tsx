@@ -23,7 +23,12 @@ const RequestForm = ({ onSubmit }: { onSubmit: (data: WeatherRequest) => void })
     });
 
     return (
-        <div className="grid place-items-center h-screen">
+        <div
+            className="grid place-items-center"
+            style={{
+                height: `calc(100vh - 6rem)`,
+            }}
+        >
             <div className="flex flex-col gap-10">
                 <div className="flex justify-center">
                     <div className="flex gap-2 items-center">

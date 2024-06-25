@@ -1,6 +1,9 @@
 import { WeatherHistogram } from "./types/types";
 
-export const buildHistogram = (data: (number | {value: number})[], numBins: number): WeatherHistogram => {
+export const buildHistogram = (
+    data: (number | { value: number })[],
+    numBins: number
+): WeatherHistogram => {
     const values: number[] = data.map(d => (typeof d === "number" ? d : d.value));
     const min = Math.min(...values);
     const max = Math.max(...values);
