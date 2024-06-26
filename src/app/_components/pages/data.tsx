@@ -40,9 +40,37 @@ const DataPage = ({
                 <span className="relative top-0.5">Try Another</span>
             </button>
             <div className="flex justify-between w-48 text-2xl mt-2">
-                <FaShareAlt />
-                <FaDonate />
-                <FaGithub />
+                <div
+                    onClick={() => {
+                        try {
+                            if (!!navigator.share) {
+                                navigator.share({
+                                    url: window.location.href,
+                                    title: `${TypeUtils.getHumanReadableHeader(data)}`,
+                                    text: `${TypeUtils.getHumanReadableReport(data)}`,
+                                });
+                            } else {
+                                //add to clipboard
+                                navigator.clipboard.writeText(window.location.href);
+                                //todo: modal popup saying it was copied to clipboard
+                            }
+                        } catch (e) {
+                            //this is fine
+                        }
+                    }}
+                >
+                    <FaShareAlt />
+                </div>
+                <a href="https://ko-fi.com/T6T7ZSBOF" target="_blank" rel="noreferrer">
+                    <FaDonate />
+                </a>
+                <a
+                    href="https://github.com/lachlansleight/this-weather"
+                    target="_blank"
+                    rel="noreferrer"
+                >
+                    <FaGithub />
+                </a>
             </div>
         </div>
     );

@@ -43,6 +43,12 @@ export type WeatherResponse = {
     units: string;
 };
 
+export type City = {
+    name: string;
+    location: Coordinate;
+    population: number;
+};
+
 export const getSeason = (month: number) => {
     if (month >= 2 && month <= 4) return "spring";
     if (month >= 5 && month <= 7) return "summer";
