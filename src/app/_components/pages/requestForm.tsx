@@ -127,7 +127,7 @@ const RequestForm = ({ onSubmit }: { onSubmit: (data: WeatherRequest) => void })
                 <button
                     className={`${uiMode === "none" || uiMode === "location" ? "block" : "hidden"} font-aleo text-3xl ${uiMode === "none" ? "bg-secondary-mid" : "bg-neutral-300"} rounded-lg grid place-items-center px-4 mx-auto border-b-2 border-r-2 border-primary-dark border-opacity-20`}
                     style={{
-                        marginTop: uiMode === "none" ? "1rem" : "calc(2rem - 2px)",
+                        marginTop: uiMode === "none" ? "1rem" : "calc(2rem + 6px)",
                     }}
                     onClick={() => {
                         if (uiMode === "none") onSubmit(data);
