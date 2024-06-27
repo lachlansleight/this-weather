@@ -15,7 +15,6 @@ const Histogram = ({
 
     return (
         <div className="relative grow w-full">
-            <div className="absolute bottom-8 bg-black w-full h-[2px]" />
             <div
                 className="absolute bottom-8 h-[70%]"
                 style={{
@@ -30,14 +29,25 @@ const Histogram = ({
                     left: `calc(-50% + (${data.mean - data.min} / ${data.max - data.min} * 100%))`
                 }} /> */}
                 {data.bins.map((bin, i) => {
+                    const lerpFactor = (bin.min - data.min) / (data.max - data.min);
+                    const lerpColor = (from: number[], to: number[], factor: number) => {
+                        return `rgb(${from.map((v, i) => v + (to[i] - v) * factor).join(", ")})`;
+                    };
+                    let backgroundColor = "rgb(0, 0, 0)";
+                    if (units === "mm")
+                        backgroundColor = lerpColor([197, 155, 124], [51, 7, 175], lerpFactor);
+                    else if (units === "km/h")
+                        backgroundColor = lerpColor([41, 68, 94], [29, 150, 9], lerpFactor);
+                    else backgroundColor = lerpColor([56, 104, 177], [175, 67, 7], lerpFactor);
                     return (
                         <div
                             key={i}
-                            className="group rounded-tl-full rounded-tr-full bg-tertiary-dark hover:bg-tertiary-mid absolute bottom-0"
+                            className="group rounded-tl-full rounded-tr-full absolute bottom-0"
                             style={{
-                                left: `calc(${((bin.min - data.min) / (data.max - data.min)) * 100}% + ${binPadding * 0.5}px)`,
+                                left: `calc(${lerpFactor * 100}% + ${binPadding * 0.5}px)`,
                                 width: `calc(${binWidth}% - ${binPadding}px)`,
                                 height: `${(bin.count / data.maxCount) * 100}%`,
+                                backgroundColor,
                             }}
                         >
                             <div className="opacity-0 group-hover:opacity-100 absolute left-0 w-full overflow-visible -bottom-6 text-center">
@@ -50,6 +60,7 @@ const Histogram = ({
                     );
                 })}
             </div>
+            <div className="absolute bottom-8 bg-black w-full h-[2px]" />
             <span className="absolute bottom-0 left-[10%] text-center text-lg">
                 {data.min.toFixed(1)}
                 {units}
@@ -80,22 +91,44 @@ const Histogram = ({
                             }}
                         />
                         <div
-                            className="absolute bg-secondary-dark w-[4px] h-full z-6"
+                            className="absolute rounded-full bg-primary-light w-[16px] h-[16px]"
                             style={{
-                                height: "calc(100% - 72px)",
-                                left: `calc(50% - 2px)`,
+                                left: `calc(50% - 8px)`,
+                                top: "46px",
+                            }}
+                        />
+                        <div
+                            className="absolute rounded-full bg-secondary-dark w-[12px] h-[12px]"
+                            style={{
+                                left: `calc(50% - 6px)`,
                                 top: "48px",
                             }}
                         />
                         <div
-                            className="absolute rounded-full bg-secondary-dark w-[24px] h-[24px]"
+                            className="absolute rounded-full bg-primary-light w-[16px] h-[16px]"
                             style={{
-                                left: `calc(50% - 12px)`,
-                                bottom: "calc(2rem - 12px)",
+                                left: `calc(50% - 8px)`,
+                                bottom: "calc(2rem - 8px)",
+                            }}
+                        />
+                        <div
+                            className="absolute rounded-full bg-secondary-dark w-[12px] h-[12px]"
+                            style={{
+                                left: `calc(50% - 6px)`,
+                                bottom: "calc(2rem - 6px)",
+                            }}
+                        />
+                        <div
+                            className="absolute bg-secondary-dark w-[4px] h-full z-6"
+                            style={{
+                                height: "calc(100% - 84px)",
+                                left: `calc(50% - 2px)`,
+                                top: "48px",
                             }}
                         />
                         <span className="absolute -bottom-8 text-2xl w-full text-center font-aleo text-secondary-dark">
                             {current.value.toFixed(1)}
+                            {units === "°C" ? "" : " "}
                             {units}
                         </span>
                     </div>

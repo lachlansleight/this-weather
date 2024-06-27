@@ -18,12 +18,21 @@ export const POST = async (req: Request) => {
     //get json data
     const data: WeatherRequest = await req.json();
 
+    let rawForecastData: WeatherResponseRawData = [];
+    let rawHistoryData: WeatherResponseRawData = [];
+
     const today = dayjs();
-    let rawForecastData = await getForecast(data.location, data.variable);
+    try {
+        rawForecastData = await getForecast(data.location, data.variable);
+        rawHistoryData = await getHistory(data.location, data.variable);
+    } catch (e) {
+        return Server.NextResponse.json({
+            error: "Failed to get weather data from the API - I probably hit their request limit",
+        });
+    }
     const forecastData = rawForecastData.filter(v => {
         return dayjs(v.time, "YYYY-MM-DD").isBefore(today);
     });
-    const rawHistoryData = await getHistory(data.location, data.variable);
     const historyData = rawHistoryData.filter(v => {
         let simDate = dayjs(v.time);
 

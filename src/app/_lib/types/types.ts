@@ -11,6 +11,7 @@ export type Coordinate = {
 };
 
 export type WeatherRequest = {
+    locationName: string;
     location: Coordinate;
     timePeriod: TimePeriod;
     variable: WeatherVariable;
@@ -31,7 +32,8 @@ export type WeatherHistogram = {
         max: number;
     }[];
     mean: number;
-    sd: number;
+    sdUp: number;
+    sdDown: number;
 };
 
 export type WeatherResponse = {
@@ -87,6 +89,56 @@ export class TypeUtils {
         }
     }
 
+    static weatherVariableEst(
+        variable: WeatherVariable,
+        invert = false,
+        capitalize = false
+    ): string {
+        if (invert) {
+            if (variable === "hot") variable = "cold";
+            else if (variable === "cold") variable = "hot";
+            else if (variable === "wet") variable = "dry";
+            else if (variable === "dry") variable = "wet";
+        }
+        switch (variable) {
+            case "hot":
+                return capitalize ? "Hottest" : "hottest";
+            case "cold":
+                return capitalize ? "Coldest" : "coldest";
+            case "windy":
+                return capitalize ? "Windiest" : "windiest";
+            case "wet":
+                return capitalize ? "Wettest" : "wettest";
+            case "dry":
+                return capitalize ? "Driest" : "driest";
+        }
+    }
+
+    static getOrdinal(val: number): string {
+        switch (val % 10) {
+            case 1:
+                return "single";
+            case 2:
+                return "second";
+            case 3:
+                return "third";
+            case 4:
+                return "fourth";
+            case 5:
+                return "fifth";
+            case 6:
+                return "sixth";
+            case 7:
+                return "seventh";
+            case 8:
+                return "eighth";
+            case 9:
+                return "ninth";
+            default:
+                return val + "th";
+        }
+    }
+
     static getWeatherVariableParams(variable: WeatherVariable, isForecast = false): string[] {
         switch (variable) {
             case "hot":
@@ -103,10 +155,12 @@ export class TypeUtils {
     }
 
     static getHumanReadableHeader(data: WeatherResponse): string {
-        let normalness = (data.thisPeriod - data.histogram.mean) / data.histogram.sd;
+        let normalness =
+            (data.thisPeriod - data.histogram.mean) /
+            (data.thisPeriod > data.histogram.mean ? data.histogram.sdUp : data.histogram.sdDown);
         if (data.variable === "cold" || data.variable === "dry") normalness *= -1;
         if (normalness < -1) return "What are you on about?";
-        if (Math.abs(normalness) < 1) return "It's just you.";
+        else if (normalness < 0.25) return "It's just you.";
         return "It's not just you!";
     }
 
@@ -116,7 +170,9 @@ export class TypeUtils {
         let thisVariableName = "";
         let thisWindowName = "";
 
-        let normalness = (data.thisPeriod - data.histogram.mean) / data.histogram.sd;
+        let normalness =
+            (data.thisPeriod - data.histogram.mean) /
+            (data.thisPeriod > data.histogram.mean ? data.histogram.sdUp : data.histogram.sdDown);
         if (data.variable === "cold" || data.variable === "dry") normalness *= -1;
 
         switch (data.timePeriod) {
@@ -155,11 +211,13 @@ export class TypeUtils {
                 break;
         }
 
-        const numberLarger =
+        const numberSmaller =
             data.variable === "cold" || data.variable === "dry"
                 ? data.rawData.reduce((a, b) => a + (b.value > data.thisPeriod ? 1 : 0), 0)
                 : data.rawData.reduce((a, b) => a + (b.value < data.thisPeriod ? 1 : 0), 0);
-        const percentage = 100 * (numberLarger / data.rawData.length);
+        const numberLarger = data.rawData.length - numberSmaller;
+        const percentage = 100 * (numberSmaller / data.rawData.length);
+        console.log({ numberSmaller, numberLarger });
 
         switch (data.timePeriod) {
             case "day":
@@ -180,9 +238,20 @@ export class TypeUtils {
         }
 
         console.log(normalness);
-        if (normalness < 0.5) {
+        if (normalness < 0.25) {
             if (normalness < -0.5) {
-                report = `In fact, ${(100 - percentage).toFixed(0)}% of ${thisWindowName} have been ${thisVariableName} than this one!`;
+                if (numberSmaller < 10) {
+                    if (
+                        (data.variable === "wet" || data.variable === "dry") &&
+                        data.thisPeriod < 1
+                    ) {
+                        report = `In fact, it hasn't rained at all ${thisPeriodName.toLowerCase()}!`;
+                    } else {
+                        report = `In fact, ${thisPeriodName.toLowerCase()} is the is the ${this.getOrdinal(numberSmaller + 1)} ${this.weatherVariableEst(data.variable, true)} ${thisWindowName.substring(0, thisWindowName.length - 1)} on record!`;
+                    }
+                } else {
+                    report = `In fact, ${(100 - percentage).toFixed(0)}% of ${thisWindowName} have been ${thisVariableName} than this one!`;
+                }
             } else {
                 if (Math.abs(percentage - 50) < 15) {
                     report = `${thisPeriodName} ${data.timePeriod === "day" ? "isn't" : "hasn't been"} any ${thisVariableName} than most ${thisWindowName} on record`;
@@ -191,7 +260,11 @@ export class TypeUtils {
                 }
             }
         } else {
-            report = `${thisPeriodName} ${data.timePeriod === "day" ? "is" : "has been"} ${thisVariableName} than ${percentage.toFixed(0)}% of ${thisWindowName} on record!`;
+            if (numberLarger < 10) {
+                report = `In fact, ${thisPeriodName.toLowerCase()} is the is the ${this.getOrdinal(numberLarger + 1)} ${this.weatherVariableEst(data.variable)} ${thisWindowName.substring(0, thisWindowName.length - 1)} on record!`;
+            } else {
+                report = `${thisPeriodName} ${data.timePeriod === "day" ? "is" : "has been"} ${thisVariableName} than ${percentage.toFixed(0)}% of ${thisWindowName} on record!`;
+            }
         }
 
         return report;

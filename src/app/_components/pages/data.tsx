@@ -1,12 +1,14 @@
 import Histogram from "_components/histogram";
-import { TypeUtils, WeatherResponse } from "_lib/types/types";
+import { TypeUtils, WeatherRequest, WeatherResponse } from "_lib/types/types";
 import { FaShareAlt, FaDonate, FaGithub } from "react-icons/fa";
 
 const DataPage = ({
     data,
+    request,
     onClear,
 }: {
     data: WeatherResponse;
+    request: WeatherRequest;
     onClear: () => void;
 }): JSX.Element => {
     return (
@@ -22,7 +24,7 @@ const DataPage = ({
             <p className="text-center text-2xl w-full mx-8 mb-4 leading-none">
                 {TypeUtils.getHumanReadableReport(data)}
                 <br />
-                <span className="text-md">(since 1970)</span>
+                <span className="text-md">(in {request.locationName} since 1970)</span>
             </p>
             <Histogram
                 data={data.histogram}
@@ -41,6 +43,7 @@ const DataPage = ({
             </button>
             <div className="flex justify-between w-48 text-2xl mt-2">
                 <div
+                    className="cursor-pointer"
                     onClick={() => {
                         try {
                             if (!!navigator.share) {
