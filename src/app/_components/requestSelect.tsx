@@ -9,7 +9,7 @@ const RequestSelect = ({
 }): JSX.Element => {
     return (
         <span
-            className="bg-primary-mid rounded-lg border-t-2 border-l-2 border-primary-dark border-opacity-20"
+            className="bg-primary-mid rounded-lg border-t-2 border-l-2 border-primary-dark border-opacity-20 w-[300px]"
             onClick={() => {
                 const curIndex = Object.keys(options).indexOf(value);
                 const newIndex = (curIndex + 1) % Object.keys(options).length;

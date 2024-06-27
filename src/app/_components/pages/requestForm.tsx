@@ -51,7 +51,7 @@ const RequestForm = ({ onSubmit }: { onSubmit: (data: WeatherRequest) => void })
 
     return (
         <div
-            className="grid place-items-center"
+            className="grid place-items-center w-[24rem] mx-auto"
             style={{
                 height: `calc(100vh - 6rem)`,
             }}
@@ -95,15 +95,11 @@ const RequestForm = ({ onSubmit }: { onSubmit: (data: WeatherRequest) => void })
                         <span>than normal?</span>
                     </div>
                 )}
-                {uiMode === "location" && (
-                    <div
-                        style={{
-                            height: 142,
-                        }}
-                    />
-                )}
                 <button
-                    className="font-aleo text-3xl bg-secondary-mid rounded-lg grid place-items-center px-4 mx-auto mt-6 border-b-2 border-r-2 border-primary-dark border-opacity-20"
+                    className={`font-aleo text-3xl ${uiMode === "none" ? "bg-secondary-mid" : "bg-neutral-300"} rounded-lg grid place-items-center px-4 mx-auto border-b-2 border-r-2 border-primary-dark border-opacity-20`}
+                    style={{
+                        marginTop: uiMode === "none" ? "1rem" : "calc(2rem - 2px)",
+                    }}
                     onClick={() => {
                         if (uiMode === "none") onSubmit(data);
                         else if (uiMode === "location") setUiMode("none");
