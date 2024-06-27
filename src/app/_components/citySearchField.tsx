@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { City } from "_lib/types/types";
-import cities from "_lib/data/cities";
+import useCities from "_lib/data/cities";
 import { FaLocationArrow } from "react-icons/fa";
 
 const CitySearchField = ({
@@ -14,6 +14,8 @@ const CitySearchField = ({
     onChange: (city: City) => void;
     onChangeUiMode: (uiMode: string) => void;
 }): JSX.Element => {
+    const cities = useCities();
+
     const [textValue, setTextValue] = useState(value?.name || "London, United Kingdom");
     const [results, setResults] = useState<(City | null)[]>([
         null,
@@ -24,19 +26,22 @@ const CitySearchField = ({
         null,
         null,
     ]);
+    const [searchText, setSearchText] = useState("");
 
     useEffect(() => {
         setTextValue(value?.name || "London, United Kingdom");
     }, [value]);
 
     useEffect(() => {
+        if (textValue === searchText) return;
         const newResults: (City | null)[] = cities
             .search(textValue)
             .slice(0, 7)
             .map(r => r.item);
         while (newResults.length < 7) newResults.push(null);
         setResults(newResults);
-    }, [textValue, uiMode]);
+        setSearchText(textValue);
+    }, [textValue, uiMode, cities, searchText]);
 
     if (uiMode !== "location") {
         return (

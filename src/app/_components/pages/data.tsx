@@ -66,6 +66,7 @@ const DataPage = ({
                     <FaShareAlt />
                 </div> */}
                 {/* can't enable this until I finish setting up the ko-fi payment thing
+                
                 <a href="https://ko-fi.com/T6T7ZSBOF" target="_blank" rel="noreferrer">
                     <FaDonate />
                 </a> */}
