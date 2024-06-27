@@ -41,7 +41,8 @@ const DataPage = ({
             >
                 <span className="relative top-0.5">Try Another</span>
             </button>
-            <div className="flex justify-between w-48 text-2xl mt-2">
+            <div className="flex justify-center gap-8 text-2xl mt-2">
+                {/* todo: make this not awful and broken
                 <div
                     className="cursor-pointer"
                     onClick={() => {
@@ -63,10 +64,11 @@ const DataPage = ({
                     }}
                 >
                     <FaShareAlt />
-                </div>
+                </div> */}
+                {/* can't enable this until I finish setting up the ko-fi payment thing
                 <a href="https://ko-fi.com/T6T7ZSBOF" target="_blank" rel="noreferrer">
                     <FaDonate />
-                </a>
+                </a> */}
                 <a
                     href="https://github.com/lachlansleight/this-weather"
                     target="_blank"
