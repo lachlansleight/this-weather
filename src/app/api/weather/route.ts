@@ -27,7 +27,7 @@ export const POST = async (req: Request) => {
         rawHistoryData = await getHistory(data.location, data.variable);
     } catch (e) {
         return Server.NextResponse.json({
-            error: "Failed to get weather data from the API - I probably hit their request limit",
+            error: "Failed to get weather data from OpenMeteo... I probably hit their request limit.",
         });
     }
     const forecastData = rawForecastData.filter(v => {
